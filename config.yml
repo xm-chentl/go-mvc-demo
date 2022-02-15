@@ -1,0 +1,5 @@
+Default:
+  Port: 9999
+  Name: go-mvc-demo
+  MySQL: root:123456789@tcp(localhost)/demo-db?charset=utf8mb4
+  Mongo: mongodb://root:19860802@42.192.163.224:27000
