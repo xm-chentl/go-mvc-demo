@@ -2,19 +2,20 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/xm-chentl/go-mvc-demo/api"
 	"github.com/xm-chentl/go-mvc-demo/plugin/apisvc"
+	"github.com/xm-chentl/go-mvc-demo/plugin/cmuxex"
+	"github.com/xm-chentl/go-mvc-demo/proto/go/userservice"
 	"github.com/xm-chentl/go-mvc-demo/service/configsvc"
 	"github.com/xm-chentl/go-mvc-demo/service/ginsvc"
+	"github.com/xm-chentl/go-mvc-demo/service/grpcsvc"
+	"google.golang.org/grpc"
 
-	"github.com/xm-chentl/go-code/dbfactory"
-	"github.com/xm-chentl/go-code/dbfactory/dbtype"
-	"github.com/xm-chentl/go-code/gormex"
 	"github.com/xm-chentl/go-code/guidex"
 	"github.com/xm-chentl/go-code/guidex/snowflake"
-	"github.com/xm-chentl/go-code/mongoex"
-	"github.com/xm-chentl/go-mvc/ginex"
 	"github.com/xm-chentl/go-mvc/ioc"
 )
 
@@ -42,17 +43,26 @@ func main() {
 		panic(err)
 	}
 
-	ioc.Set(new(dbfactory.IDbFactory), dbfactory.New(map[dbtype.Value]dbfactory.IDbFactory{
-		dbtype.MySql: gormex.New(config.MySQL),
-		dbtype.Mongo: mongoex.New("leban-server", config.Mongo),
-	}))
+	// ioc.Set(new(dbfactory.IDbFactory), dbfactory.New(map[dbtype.Value]dbfactory.IDbFactory{
+	// 	dbtype.MySql: gormex.New(config.MySQL),
+	// 	dbtype.Mongo: mongoex.New("leban-server", config.Mongo),
+	// }))
 	ioc.Set(new(guidex.IGenerate), snowflake.New())
 
 	api.Register()
-	ginex.New(
-		ginsvc.NewBgPost(),
-		ginsvc.NewMobilePost(),
-		ginsvc.NewGraphqlGet(), // todo: 生产环境不开放
-		ginsvc.NewGraphqlPost(),
-	).Run(config.Port)
+
+	ginS := gin.Default()
+	ginsvc.NewBgPost(ginS)
+	ginsvc.NewMobilePost(ginS)
+	ginsvc.NewGraphqlGet(ginS) // todo: 生产环境不开放
+	ginsvc.NewGraphqlPost(ginS)
+	grpcS := grpc.NewServer()
+	userservice.RegisterUserServiceServer(grpcS, grpcsvc.NewUserService())
+	s := cmuxex.IntegratedServer{
+		GinS:  ginS,
+		GrpcS: grpcS,
+	}
+	if err := s.Run(fmt.Sprintf(":%d", config.Port)); err != nil {
+		panic(err)
+	}
 }

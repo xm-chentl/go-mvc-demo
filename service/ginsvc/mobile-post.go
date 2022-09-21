@@ -40,112 +40,110 @@ type mobileURI struct {
 	EndPoint string `uri:"endpoint"`
 }
 
-func NewMobilePost() ginex.Option {
-	return func(g *gin.Engine) {
-		verifyInst := validator.New()
-		g.POST("/mobile/:target/:endpoint", func(ctx *gin.Context) {
-			defer func() {
-				if recoverErr := recover(); recoverErr != nil {
-					fmt.Println("err :", recoverErr)
-					ctx.JSON(
-						http.StatusOK,
-						map[string]interface{}{
-							"err":  errorex.ServerErr,
-							"data": recoverErr,
-						},
-					)
-				}
-			}()
+func NewMobilePost(g *gin.Engine) {
+	verifyInst := validator.New()
+	g.POST("/mobile/:target/:endpoint", func(ctx *gin.Context) {
+		defer func() {
+			if recoverErr := recover(); recoverErr != nil {
+				fmt.Println("err :", recoverErr)
+				ctx.JSON(
+					http.StatusOK,
+					map[string]interface{}{
+						"err":  errorex.ServerErr,
+						"data": recoverErr,
+					},
+				)
+			}
+		}()
 
-			var err error
-			var mobileURI mobileURI
-			if err = ctx.ShouldBindUri(&mobileURI); err != nil {
+		var err error
+		var mobileURI mobileURI
+		if err = ctx.ShouldBindUri(&mobileURI); err != nil {
+			panic(err)
+		}
+
+		var mobileHeader mobileHeader
+		if err = ctx.ShouldBindHeader(&mobileHeader); err != nil {
+			panic(err)
+		}
+		code := fmt.Sprintf("/mobile/%s/%s", mobileURI.Targat, mobileURI.EndPoint)
+		if ok := metadata.Has(code); !ok {
+			panic("api is not exist")
+		}
+
+		api := metadata.Get(code)
+		newApiInstance := reflect.New(reflect.TypeOf(api).Elem()).Interface()
+		isDebug := false
+		if mobileHeader.Mode == "DEBUG" {
+			// todo: 前期方便调试
+			isDebug = true
+			if err = ctx.ShouldBindJSON(&newApiInstance); err != nil {
+				panic(err)
+			}
+		} else {
+			var mobileBody mobileBody
+			if err = ctx.BindJSON(&mobileBody); err != nil {
 				panic(err)
 			}
 
-			var mobileHeader mobileHeader
-			if err = ctx.ShouldBindHeader(&mobileHeader); err != nil {
-				panic(err)
-			}
-			code := fmt.Sprintf("/mobile/%s/%s", mobileURI.Targat, mobileURI.EndPoint)
-			if ok := metadata.Has(code); !ok {
-				panic("api is not exist")
-			}
-
-			api := metadata.Get(code)
-			newApiInstance := reflect.New(reflect.TypeOf(api).Elem()).Interface()
-			isDebug := false
-			if mobileHeader.Mode == "DEBUG" {
-				// todo: 前期方便调试
-				isDebug = true
-				if err = ctx.ShouldBindJSON(&newApiInstance); err != nil {
-					panic(err)
-				}
-			} else {
-				var mobileBody mobileBody
-				if err = ctx.BindJSON(&mobileBody); err != nil {
-					panic(err)
-				}
-
-				// todo: 如果前端使用未编码的文本，则这里不需要处理
-				valueBytes, _ := base64.StdEncoding.DecodeString(mobileBody.Value)
-				bodyByte, err := encryptsvc.Decrypt(valueBytes, []byte(encryptKey))
-				if err != nil {
-					panic(err)
-				}
-				if err = json.Unmarshal(bodyByte, &newApiInstance); err != nil {
-					panic(err)
-				}
-			}
-			if ok := verifyInst.Execute(newApiInstance); !ok {
-				panic("参数不正确")
-			}
-
-			err = ioc.Inject(newApiInstance, func(field reflect.StructField) interface{} {
-				if strings.Contains(field.Type.Name(), "IRoute") {
-					return ginex.NewRoute(ctx)
-				}
-
-				return nil
-			})
+			// todo: 如果前端使用未编码的文本，则这里不需要处理
+			valueBytes, _ := base64.StdEncoding.DecodeString(mobileBody.Value)
+			bodyByte, err := encryptsvc.Decrypt(valueBytes, []byte(encryptKey))
 			if err != nil {
 				panic(err)
 			}
-
-			var ok bool
-			var mobileDevice contract.IMobileDevice
-			mobileDevice, ok = newApiInstance.(contract.IMobileDevice)
-			if ok {
-				mobileDevice.SetDevice(mobileHeader.DeviceChannel, mobileHeader.DeviceUnique)
-			}
-
-			var sessionData contract.ISessionData
-			sessionData, ok = newApiInstance.(contract.ISessionData)
-			if ok {
-				if isDebug {
-					sessionData.SetSession(mobileHeader.DebugUID)
-				} else {
-					// todo: 根据token获取用户信息并赋值全sessionData.SetSession
-				}
-			}
-
-			var apiInstance mvc.IApi
-			apiInstance, ok = newApiInstance.(mvc.IApi)
-			if !ok {
-				panic("api is not mvc.IApi")
-			}
-
-			resp, err := apiInstance.Call()
-			if err != nil {
+			if err = json.Unmarshal(bodyByte, &newApiInstance); err != nil {
 				panic(err)
 			}
-			ctx.JSON(
-				http.StatusOK,
-				map[string]interface{}{
-					"err":  0,
-					"data": resp,
-				},
-			)
+		}
+		if ok := verifyInst.Execute(newApiInstance); !ok {
+			panic("参数不正确")
+		}
+
+		err = ioc.Inject(newApiInstance, func(field reflect.StructField) interface{} {
+			if strings.Contains(field.Type.Name(), "IRoute") {
+				return ginex.NewRoute(ctx)
+			}
+
+			return nil
 		})
-	}
+		if err != nil {
+			panic(err)
+		}
+
+		var ok bool
+		var mobileDevice contract.IMobileDevice
+		mobileDevice, ok = newApiInstance.(contract.IMobileDevice)
+		if ok {
+			mobileDevice.SetDevice(mobileHeader.DeviceChannel, mobileHeader.DeviceUnique)
+		}
+
+		var sessionData contract.ISessionData
+		sessionData, ok = newApiInstance.(contract.ISessionData)
+		if ok {
+			if isDebug {
+				sessionData.SetSession(mobileHeader.DebugUID)
+			} else {
+				// todo: 根据token获取用户信息并赋值全sessionData.SetSession
+			}
+		}
+
+		var apiInstance mvc.IApi
+		apiInstance, ok = newApiInstance.(mvc.IApi)
+		if !ok {
+			panic("api is not mvc.IApi")
+		}
+
+		resp, err := apiInstance.Call()
+		if err != nil {
+			panic(err)
+		}
+		ctx.JSON(
+			http.StatusOK,
+			map[string]interface{}{
+				"err":  0,
+				"data": resp,
+			},
+		)
+	})
 }

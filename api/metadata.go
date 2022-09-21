@@ -1,10 +1,9 @@
 package api
 
 import (
+	"github.com/xm-chentl/go-mvc"
 	"github.com/xm-chentl/go-mvc-demo/api/mobile/login"
 	"github.com/xm-chentl/go-mvc-demo/api/mobile/user"
-
-	"github.com/xm-chentl/go-mvc"
 	"github.com/xm-chentl/go-mvc/metadata"
 )
 
