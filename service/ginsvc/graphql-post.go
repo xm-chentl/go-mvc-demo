@@ -5,7 +5,6 @@ import (
 	"github.com/xm-chentl/go-mvc-demo/graphql/mutation"
 	"github.com/xm-chentl/go-mvc-demo/graphql/query"
 	"github.com/xm-chentl/go-mvc-demo/graphql/sdl"
-	"github.com/xm-chentl/go-mvc/ginex"
 	"github.com/xm-chentl/go-mvc/ioc"
 
 	"github.com/gin-gonic/gin"
@@ -14,7 +13,7 @@ import (
 )
 
 // NewGraphqlPost
-func NewGraphqlPost() ginex.Option {
+func NewGraphqlPost(g *gin.Engine) {
 	schemaString, err := sdl.GetSchemaString()
 	if err != nil {
 		panic(err)
@@ -34,13 +33,10 @@ func NewGraphqlPost() ginex.Option {
 		Mutation: mutation,
 		Query:    query,
 	})
-
-	return func(g *gin.Engine) {
-		g.POST("/graphql", func(c *gin.Context) {
-			h := relay.Handler{Schema: schemaSdl}
-			h.ServeHTTP(c.Writer, c.Request)
-		})
-	}
+	g.POST("/graphql", func(c *gin.Context) {
+		h := relay.Handler{Schema: schemaSdl}
+		h.ServeHTTP(c.Writer, c.Request)
+	})
 }
 
 // 原生构建

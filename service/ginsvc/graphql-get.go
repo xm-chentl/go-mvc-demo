@@ -2,7 +2,6 @@ package ginsvc
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/xm-chentl/go-mvc/ginex"
 )
 
 var graphqlPlay = []byte(`
@@ -43,10 +42,8 @@ var graphqlPlay = []byte(`
 </html>
 `)
 
-func NewGraphqlGet() ginex.Option {
-	return func(g *gin.Engine) {
-		g.GET("/playground", func(c *gin.Context) {
-			c.Writer.Write(graphqlPlay)
-		})
-	}
+func NewGraphqlGet(g *gin.Engine) {
+	g.GET("/playground", func(c *gin.Context) {
+		c.Writer.Write(graphqlPlay)
+	})
 }
