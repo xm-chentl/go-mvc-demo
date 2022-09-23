@@ -62,7 +62,5 @@ func main() {
 		GinS:  ginS,
 		GrpcS: grpcS,
 	}
-	if err := s.Run(fmt.Sprintf(":%d", config.Port)); err != nil {
-		panic(err)
-	}
+	s.Run(fmt.Sprintf(":%d", config.Port))
 }
