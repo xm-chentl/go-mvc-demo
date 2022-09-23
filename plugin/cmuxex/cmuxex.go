@@ -57,9 +57,9 @@ func (s *IntegratedServer) Run(addr string) {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	<-c
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	fmt.Println("Close the service countdown...5s")
+	fmt.Println("Close the service countdown...2s")
 
 	<-ctx.Done()
 	cm.Close()
