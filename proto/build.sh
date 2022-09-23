@@ -20,6 +20,7 @@ function build_all(){
 if [ "$1" == "" ];then
     echo 请传入指定参数
     echo 如: sh build.sh 指定目录
+    echo all 默认根目录下所有目录、指定目录 如 common
 elif [ "$1" == "all" ];then
     build_all
 else
