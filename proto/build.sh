@@ -16,7 +16,6 @@ function build_all(){
         build $d
     done
 }
-
 if [ "$1" == "" ];then
     echo 请传入指定参数
     echo 如: sh build.sh 指定目录
@@ -24,7 +23,9 @@ if [ "$1" == "" ];then
 elif [ "$1" == "all" ];then
     build_all
 else
-    build $1
+    for a in $*; do
+        build $a
+    done
 fi
 
     
