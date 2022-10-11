@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"path"
 
 	"github.com/gin-gonic/gin"
 	"github.com/xm-chentl/go-mvc-demo/api"
@@ -37,8 +38,10 @@ func main() {
 		return
 	}
 
+	// curSrc, _ := os.Getwd()
+
 	var config Default
-	cfgSvc := configsvc.NewYaml("config.yml")
+	cfgSvc := configsvc.NewYaml(path.Join("..", "..", "build", "config.yml"))
 	if err := cfgSvc.GetStruct(&config); err != nil {
 		panic(err)
 	}

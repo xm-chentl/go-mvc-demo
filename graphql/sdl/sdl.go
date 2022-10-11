@@ -9,7 +9,7 @@ import (
 // todo: 后续考虑由外面传入
 func GetSchemaString() (content string, err error) {
 	wd, _ := os.Getwd()
-	file, err := os.Open(path.Join(wd, "graphql", "sdl", "graphql.graphql"))
+	file, err := os.Open(path.Join(wd, "..", "..", "graphql", "sdl", "graphql.graphql"))
 	if err != nil {
 		return
 	}
