@@ -6,6 +6,7 @@ import (
 	"github.com/xm-chentl/go-mvc-demo/graphql/query"
 	"github.com/xm-chentl/go-mvc-demo/graphql/sdl"
 	"github.com/xm-chentl/go-mvc/ioc"
+	"github.com/xm-chentl/gocore/frame"
 
 	"github.com/gin-gonic/gin"
 	"github.com/graph-gophers/graphql-go"
@@ -13,30 +14,32 @@ import (
 )
 
 // NewGraphqlPost
-func NewGraphqlPost(g *gin.Engine) {
-	schemaString, err := sdl.GetSchemaString()
-	if err != nil {
-		panic(err)
-	}
+func NewGraphqlPost() frame.GinOption {
+	return func(g *gin.Engine) {
+		schemaString, err := sdl.GetSchemaString()
+		if err != nil {
+			panic(err)
+		}
 
-	mutation := &mutation.Mutation{}
-	if err = ioc.Inject(mutation); err != nil {
-		panic(err)
-	}
+		mutation := &mutation.Mutation{}
+		if err = ioc.Inject(mutation); err != nil {
+			panic(err)
+		}
 
-	query := &query.Query{}
-	if err = ioc.Inject(query); err != nil {
-		panic(err)
-	}
+		query := &query.Query{}
+		if err = ioc.Inject(query); err != nil {
+			panic(err)
+		}
 
-	schemaSdl := graphql.MustParseSchema(schemaString, &graphqlex.Resolver{
-		Mutation: mutation,
-		Query:    query,
-	})
-	g.POST("/graphql", func(c *gin.Context) {
-		h := relay.Handler{Schema: schemaSdl}
-		h.ServeHTTP(c.Writer, c.Request)
-	})
+		schemaSdl := graphql.MustParseSchema(schemaString, &graphqlex.Resolver{
+			Mutation: mutation,
+			Query:    query,
+		})
+		g.POST("/graphql", func(c *gin.Context) {
+			h := relay.Handler{Schema: schemaSdl}
+			h.ServeHTTP(c.Writer, c.Request)
+		})
+	}
 }
 
 // 原生构建

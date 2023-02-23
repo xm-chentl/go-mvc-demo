@@ -35,7 +35,7 @@ func Register() {
 )
 
 var (
-	formatQuote = `"gitee.com/xmleban/%s/api%s"`
+	formatQuote = `"github.com/xm-chentl/%s/api%s"`
 	regexAPI    = regexp.MustCompile("[A-Za-z0-9]+API")
 )
 
@@ -57,11 +57,20 @@ type apiInfo struct {
 	4. 生成源文件
 */
 
-func GenerateMatedata() (err error) {
-	rootDir, _ := os.Getwd()
-	rootDirArray := strings.Split(rootDir, "/")
-	apiDir := path.Join(rootDir, "api")
-	projectName := rootDirArray[len(rootDirArray)-1]
+func GenerateMatedata(apiPath string) (err error) {
+	apiDir := apiPath
+	projectName := ""
+	if apiDir == "" {
+		rootDir, _ := os.Getwd()
+		rootDirArray := strings.Split(rootDir, "/")
+		apiDir = path.Join(rootDir, "api")
+		projectName = rootDirArray[len(rootDirArray)-1]
+	} else {
+		rootDirArray := strings.Split(apiDir, "/")
+		projectName = rootDirArray[len(rootDirArray)-2]
+	}
+	fmt.Println(" >>>>>>>> ", projectName)
+
 	apiDirFileArray, err := os.ReadDir(apiDir)
 	if err != nil {
 		return
@@ -135,6 +144,10 @@ func GenerateMatedata() (err error) {
 	})
 
 	filePath := path.Join(apiDir, "metadata.go")
+	if _, err = os.Stat(filePath); err != nil {
+		// 不存在
+		_, _ = os.Create(filePath)
+	}
 	file, err := os.Open(filePath)
 	if err != nil {
 		return

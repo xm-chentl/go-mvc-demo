@@ -14,11 +14,11 @@ import (
 	"github.com/xm-chentl/gocore/frame"
 )
 
-func NewBgPost() frame.GinOption {
+func NewUserCenterPost() frame.GinOption {
 	return func(ginInst *gin.Engine) {
 		verifyInst := validator.New()
 		handler := handler.Default()
-		ginInst.POST("/bg/:server/:action", func(ctx *gin.Context) {
+		ginInst.POST("/user-center/:server/:action", func(ctx *gin.Context) {
 			defer func() {
 				if recoverErr := recover(); recoverErr != nil {
 					ctx.JSON(
@@ -31,13 +31,8 @@ func NewBgPost() frame.GinOption {
 				}
 			}()
 
-			// route := fmt.Sprintf("/bg/%s/%s", ctx.Param("server"), ctx.Param("action"))
-			// if ok := metadata.Has(route); !ok {
-
-			// }
-
 			c := context.New()
-			c.Set(enum.Code, fmt.Sprintf("/bg/%s/%s", ctx.Param("server"), ctx.Param("action")))
+			c.Set(enum.Code, fmt.Sprintf("/user-center/%s/%s", ctx.Param("server"), ctx.Param("action")))
 			c.Set(enum.CTX, ginex.NewRoute(ctx))
 			c.Set(enum.Verify, verifyInst)
 			handler.Execute(c)

@@ -9,8 +9,8 @@ import (
 )
 
 type IntegratedServer struct {
-	GrpcS *grpc.Server
-	GinS  *gin.Engine
+	GinSrv  *gin.Engine
+	GrpcSrv *grpc.Server
 }
 
 func (s *IntegratedServer) Run(addr string) error {
@@ -20,11 +20,11 @@ func (s *IntegratedServer) Run(addr string) error {
 	}
 
 	cm := cmux.New(l)
-	if s.GinS != nil {
-		go s.GinS.RunListener(cm.Match(cmux.HTTP1Fast()))
+	if s.GinSrv != nil {
+		go s.GinSrv.RunListener(cm.Match(cmux.HTTP1Fast()))
 	}
-	if s.GrpcS != nil {
-		go s.GrpcS.Serve(
+	if s.GrpcSrv != nil {
+		go s.GrpcSrv.Serve(
 			cm.Match(
 				cmux.HTTP2HeaderField("content-type", "application/grpc"),
 			),

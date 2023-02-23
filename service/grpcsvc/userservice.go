@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/xm-chentl/go-mvc-demo/proto/go/userservice"
+	"github.com/xm-chentl/gocore/frame"
+	"google.golang.org/grpc"
 )
 
 type userServiceImpl struct {
@@ -17,6 +19,12 @@ func (s *userServiceImpl) Create(ctx context.Context, req *userservice.CreateReq
 	return
 }
 
-func NewUserService() userservice.UserServiceServer {
+func NewUserService1() userservice.UserServiceServer {
 	return &userServiceImpl{}
+}
+
+func NewUserService() frame.GRPCOption {
+	return func(g *grpc.Server) {
+		userservice.RegisterUserServiceServer(g, &userServiceImpl{})
+	}
 }

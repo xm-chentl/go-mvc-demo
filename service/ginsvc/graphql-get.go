@@ -2,6 +2,7 @@ package ginsvc
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/xm-chentl/gocore/frame"
 )
 
 var graphqlPlay = []byte(`
@@ -42,8 +43,10 @@ var graphqlPlay = []byte(`
 </html>
 `)
 
-func NewGraphqlGet(g *gin.Engine) {
-	g.GET("/playground", func(c *gin.Context) {
-		c.Writer.Write(graphqlPlay)
-	})
+func NewGraphqlGet() frame.GinOption {
+	return func(g *gin.Engine) {
+		g.GET("/playground", func(c *gin.Context) {
+			c.Writer.Write(graphqlPlay)
+		})
+	}
 }

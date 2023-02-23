@@ -8,11 +8,11 @@ import (
 )
 
 type AccountAPI struct {
-	DbFactory dbfactory.IDbFactory `inject:""`
+	DbFactory dbfactory.IDbFactory `inject:"mongo"`
 	Guid      guidex.IGenerate     `inject:""`
 
-	Mobile   string
-	Password string
+	Mobile   string `json:"m"`
+	Password string 
 }
 
 func (s AccountAPI) Call() (res interface{}, err error) {
